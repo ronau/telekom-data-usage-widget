@@ -624,6 +624,10 @@ try {
 if (!fm.fileExists(path)) {
   console.log("File doesnt exist. Looks like your first init.");
   first = await createFirstWidget();
+  // Show the hint when the script is run in the app, e.g. right after setup
+  if (config.runsInApp) {
+    first.presentSmall();
+  }
   Script.setWidget(first);
 } else {
   data = await getFromFile();
@@ -650,7 +654,7 @@ if (!fm.fileExists(path)) {
   }
 
   widget.presentSmall();
-  widget.url = "https://pass.telekom.de";
+  widget.url = "https://datapass.de";
 
   Script.setWidget(widget);
 }

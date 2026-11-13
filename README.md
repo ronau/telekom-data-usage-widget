@@ -40,6 +40,9 @@ Für mehr Einstellungen muss das Skript geöffnet werden. In den ersten Zeilen b
 ## Telekom Modul
 Mithilfe des <a href="https://github.com/marcjulianschwarz/telekom-data-usage-widget/blob/main/telekom-module/telekom-module.js">Telekom Moduls</a> lassen sich die Telekom Daten ganz einfach auch in eigenen Anwendungen verwenden. Eine Anleitung dazu (für Scriptable) und mehr Informationen befinden sich <a href="https://github.com/marcjulianschwarz/telekom-data-usage-widget/tree/main/telekom-module">hier</a>. 
 
+## Tests
+Der Parser für die datapass.de-Seite lässt sich ohne iPhone mit Node.js testen: `node --test`. Als Referenz liegen echte (anonymisierte) Telekom-Seiten in `test/fixtures/`.
+
 ## Fragen?
 Gerne beantworte ich alle Fragen und freue mich über Feedback, Anregungen und Ideen, die zur Verbesserung des Widgets beitragen können.
 Meine Kontaktmöglichkeiten:
@@ -87,4 +90,5 @@ Meine Kontaktmöglichkeiten:
 ## Bekannte Probleme:
 - Widget funktioniert nur mit deutschen Telekom Verträgen
 - Widget funktioniert nicht mit Telekom unlimited Verträgen (Telekom API liefert keine Daten)
+- Zeigt das Widget ein Warndreieck, wurde die Datenseite nicht erkannt (z. B. nach einer Änderung der Seite oder bei anderen Marken wie fraenk oder congstar). Es werden dann die zuletzt gespeicherten Daten angezeigt, und die Seite liegt als `unrecognized-page.html` im Ordner `telekom-widget`. Diese Datei gerne einem Issue anhängen, vorher aber persönliche Angaben (z. B. Volumen-Zahlen und Links mit `crt=`) unkenntlich machen.
 

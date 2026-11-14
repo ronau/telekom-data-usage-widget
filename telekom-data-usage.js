@@ -202,12 +202,19 @@ function findRemainingSeconds(html, text, now) {
     return { seconds: Math.max(0, Math.round((end - now) / 1000)), source: "script" };
   }
 
-  // 2. Countdown text right after the volume, German or English:
-  //    "17 Tage 01 Std. 29 Min. 42 Sek." / "17 days 01 hours 29 min. 42 secs"
+  // Where to look for validity text: the pass cards if the page has them, so
+  // offers below them ("für 24 Stunden", "für 7 Tage") can't be taken for the
+  // validity. Otherwise the text right after the volume.
   let none = { seconds: null, source: "none" };
-  let start = text.search(VOLUME_TEXT_RE);
-  if (start < 0) return none;
-  let nearby = text.slice(start, start + 300);
+  let nearby = passCardsText(html);
+  if (!nearby) {
+    let start = text.search(VOLUME_TEXT_RE);
+    if (start < 0) return none;
+    nearby = text.slice(start, start + 300);
+  }
+
+  // 2. Countdown text, German or English (Telekom):
+  //    "17 Tage 01 Std. 29 Min. 42 Sek." / "17 days 01 hours 29 min. 42 secs"
   let num = (re) => {
     let m = nearby.match(re);
     return m ? parseInt(m[1], 10) : NaN;
@@ -216,10 +223,47 @@ function findRemainingSeconds(html, text, now) {
   let hours = num(/(\d+)\s*(?:Std\b|Stunden?\b|hours?\b|hrs?\b)/i);
   let mins = num(/(\d+)\s*(?:Min(?:\.|uten?\b|\b)|mins?\b|minutes?\b)/i);
   let secs = num(/(\d+)\s*(?:Sek(?:\.|unden?\b|\b)|secs?\b|seconds?\b)/i);
-  if (isNaN(days) && isNaN(hours) && isNaN(mins)) return none;
-  let seconds =
-    (days || 0) * 86400 + (hours || 0) * 3600 + (mins || 0) * 60 + (secs || 0);
-  return { seconds, source: "text" };
+  if (!isNaN(days) || !isNaN(hours) || !isNaN(mins)) {
+    let seconds =
+      (days || 0) * 86400 + (hours || 0) * 3600 + (mins || 0) * 60 + (secs || 0);
+    return { seconds, source: "text" };
+  }
+
+  // 3. End date (congstar): "Gültig bis: 09. Dezember 2026" or "09.12.2026".
+  //    The page gives no time, so the end of that day is assumed.
+  let end = findValidUntilDate(nearby);
+  if (end) {
+    return { seconds: Math.max(0, Math.round((end - now) / 1000)), source: "date" };
+  }
+  return none;
+}
+
+// Visible text of all pass cards (<section class="data-pass-instance">), or ""
+// when the page has none. Offers and footers are outside these cards.
+function passCardsText(html) {
+  let re =
+    /<section\b[^>]*class="(?:[^"]*\s)?data-pass-instance(?:\s[^"]*)?"[^>]*>[\s\S]*?<\/section>/g;
+  let cards = html.match(re) || [];
+  return cards.map(htmlToText).join(" ");
+}
+
+const GERMAN_MONTHS = [
+  "jan", "feb", "mär", "apr", "mai", "jun",
+  "jul", "aug", "sep", "okt", "nov", "dez",
+];
+
+// End of the day given after "Gültig bis", as epoch ms, or null.
+function findValidUntilDate(text) {
+  let m = text.match(
+    /Gültig bis:?\s*(\d{1,2})\.\s*(?:([A-Za-zÄÖÜäöü]+)|(\d{1,2})\.)\s*(\d{4})/i
+  );
+  if (m == null) return null;
+  let month = m[2]
+    ? GERMAN_MONTHS.indexOf(m[2].slice(0, 3).toLowerCase())
+    : parseInt(m[3], 10) - 1;
+  if (month < 0 || month > 11) return null;
+  let day = parseInt(m[1], 10);
+  return new Date(parseInt(m[4], 10), month, day, 23, 59, 59).getTime();
 }
 
 // { name, source }

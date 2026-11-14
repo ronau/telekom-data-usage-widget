@@ -88,7 +88,7 @@ Meine Kontaktmöglichkeiten:
 - Angepasstes Medium Widget mit einer neuen Anzeige für den Verbrauch
 
 ## Bekannte Probleme:
-- Widget funktioniert nur mit deutschen Telekom Verträgen
+- Widget funktioniert nur mit deutschen Verträgen, deren Datenvolumen auf datapass.de angezeigt wird. Getestet mit Telekom und congstar, andere Marken (z. B. fraenk) sind ungetestet.
 - Widget funktioniert nicht mit Telekom unlimited Verträgen (Telekom API liefert keine Daten)
-- Zeigt das Widget ein Warndreieck, wurde die Datenseite nicht erkannt (z. B. nach einer Änderung der Seite oder bei anderen Marken wie fraenk oder congstar). Es werden dann die zuletzt gespeicherten Daten angezeigt, und die Seite liegt als `unrecognized-page.html` im Ordner `telekom-widget`. Diese Datei gerne einem Issue anhängen, vorher aber persönliche Angaben (z. B. Volumen-Zahlen und Links mit `crt=`) unkenntlich machen.
+- Zeigt das Widget ein Warndreieck, wurde die Datenseite nicht erkannt (z. B. nach einer Änderung der Seite oder bei ungetesteten Marken). Es werden dann die zuletzt gespeicherten Daten angezeigt, und die Seite liegt als `unrecognized-page.html` im Ordner `telekom-widget`. Diese Datei gerne einem Issue anhängen, vorher aber persönliche Angaben (z. B. Volumen-Zahlen und Links mit `crt=`) unkenntlich machen.
 

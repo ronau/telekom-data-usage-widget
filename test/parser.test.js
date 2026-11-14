@@ -9,6 +9,9 @@
 //   (crt=…) and the pass ID are redacted. The English countdown seconds are
 //   set from 43 to 42 to match the German page, saved a second later.
 // - datapass-wifi-*.html: over WiFi ("needs a mobile network connection").
+// - datapass-congstar-de.html: saved on 2026-11-14 over the congstar network.
+//   congstar ignores ?lang=en, so there is no English page. Booking tokens and
+//   the pass ID are redacted.
 
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -39,6 +42,7 @@ const fixture = (name) =>
   fs.readFileSync(path.join(__dirname, "fixtures", name), "utf8");
 const DE = fixture("datapass-telekom-de.html");
 const EN = fixture("datapass-telekom-en.html");
+const CONGSTAR = fixture("datapass-congstar-de.html");
 
 // The fixtures say the volume ends at 1796079599000 (30.11.2026 23:59:59 CET)
 // and the German page showed "17 Tage 01 Std. 29 Min. 42 Sek." left.
@@ -91,6 +95,37 @@ test("reads the countdown text when the countdown script is missing", () => {
     const html = page.replace(/updateCountdown\([^)]*\)/, "");
     assert.equal(parseUsageFromHtml(html, NOW).remainingSeconds, REMAINING);
   }
+});
+
+test("congstar page: validity from the end date, no countdown", () => {
+  // "Gültig bis: 09. Dezember 2026", end of that day in local time
+  const end = new Date(2026, 11, 9, 23, 59, 59).getTime();
+  const now = end - 25 * 86400 * 1000;
+  const r = parseUsageFromHtml(CONGSTAR, now);
+  assertUsage(r, {
+    passName: "Dein Datenvolumen",
+    initialVolume: 7 * GIGABYTE,
+    usedVolume: (7 - 6.97) * GIGABYTE,
+    usedPercentage: 0,
+    remainingSeconds: 25 * 86400,
+  });
+  assert.deepEqual({ ...r.parsedFrom }, { volume: "markup", validity: "date", name: "markup" });
+});
+
+test("offers below the pass card are not taken as the validity", () => {
+  // Without the "Letzte Aktualisierung" block, "für 24 Stunden" from the first
+  // offer would be right after the volume.
+  const html = CONGSTAR
+    .replace(/<div class="last-update">[\s\S]*?Uhr\s*<\/div>/, "")
+    .replace(/Gültig bis:\s[^<]*/, "");
+  assert.ok(!/Letzte Aktualisierung|Gültig bis/.test(html), "test setup");
+  assert.equal(parseUsageFromHtml(html, NOW).remainingSeconds, null);
+});
+
+test("end date with a numeric month", () => {
+  const html = "<div>6,97 / 7 GB</div><div>Gültig bis: 09.12.2026</div>";
+  const end = new Date(2026, 11, 9, 23, 59, 59).getTime();
+  assert.equal(parseUsageFromHtml(html, end - 3600 * 1000).remainingSeconds, 3600);
 });
 
 test("promo text before the usage card doesn't win over the markup", () => {
